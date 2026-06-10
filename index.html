@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Sprache der Neuen Rechten</title>
+    <style>
+        :root {
+            --primary: #1a3a5c;
+            --bg: #f8f9fa;
+            --card: #ffffff;
+            --text: #212529;
+            --muted: #6c757d;
+            --correct: #2d6a4f;
+            --wrong: #c1121f;
+            --correct-bg: #d8f3dc;
+            --wrong-bg: #ffe0e0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 1.5rem 2rem;
+            text-align: center;
+        }
+        header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.25rem; }
+        header p { font-size: 0.9rem; opacity: 0.8; }
+        main {
+            flex: 1;
+            max-width: 760px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .progress-bar {
+            background: #e9ecef;
+            border-radius: 99px;
+            height: 8px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background: var(--primary);
+            height: 100%;
+            border-radius: 99px;
+            transition: width 0.4s ease;
+        }
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+        }
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 600;
+            line-height: 1.5;
+            margin-bottom: 0.5rem;
+        }
+        .term-badge {
+            display: inline-block;
+            background: #eef2ff;
+            color: #3730a3;
+            border-radius: 6px;
+            padding: 0.2rem 0.7rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 1.2rem;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .option-btn {
+            text-align: left;
+            padding: 0.9rem 1.2rem;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: #f0f4ff;
+        }
+        .option-btn.correct {
+            border-color: var(--correct);
+            background: var(--correct-bg);
+            color: var(--correct);
+            font-weight: 600;
+        }
+        .option-btn.wrong {
+            border-color: var(--wrong);
+            background: var(--wrong-bg);
+            color: var(--wrong);
+        }
+        .option-btn:disabled { cursor: default; }
+        .explanation {
+            background: #f0f4ff;
+            border-left: 4px solid var(--primary);
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.2rem;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #333;
+            display: none;
+            margin-bottom: 1.5rem;
+        }
+        .explanation.visible { display: block; }
+        .next-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.8rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: none;
+            transition: opacity 0.2s;
+        }
+        .next-btn:hover { opacity: 0.9; }
+        .next-btn.visible { display: inline-block; }
+        .result-screen { text-align: center; display: none; }
+        .result-screen.visible { display: block; }
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+        .score-number { font-size: 2.2rem; font-weight: 700; line-height: 1; }
+        .score-label { font-size: 0.8rem; opacity: 0.85; }
+        .result-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .result-msg { color: var(--muted); margin-bottom: 2rem; line-height: 1.6; }
+        .restart-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .start-screen { text-align: center; }
+        .start-screen h2 { font-size: 1.4rem; margin-bottom: 1rem; }
+        .start-screen p { color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; }
+        .start-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.9rem 2.5rem;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Sprache der Neuen Rechten</h1>
+    <p>Bildungs-Quiz &middot; Begriffe erkennen und einordnen</p>
+</header>
+
+<main>
+    <div class="card">
+
+        <div class="start-screen" id="startScreen">
+            <h2>Was wei&szlig;t du &uuml;ber rechtsextreme Sprache?</h2>
+            <p>
+                Die Neue Rechte hat eine eigene Sprache entwickelt, um extremistische Inhalte
+                gesellschaftsf&auml;hig klingen zu lassen. Dieses Quiz hilft dir, typische Begriffe
+                zu erkennen, einzuordnen und ideologische Strategien dahinter zu durchschauen.
+            </p>
+            <p><strong>10 Fragen &middot; Erkl&auml;rungen zu jeder Antwort</strong></p>
+            <button class="start-btn" onclick="startQuiz()">Quiz starten</button>
+        </div>
+
+        <div id="quizScreen" style="display:none">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="meta">
+                <span id="questionCount"></span>
+                <span id="scoreDisplay"></span>
+            </div>
+            <div class="term-badge" id="termBadge"></div>
+            <div class="question-text" id="questionText"></div>
+            <div class="options" id="optionsContainer"></div>
+            <div class="explanation" id="explanation"></div>
+            <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Weiter &rarr;</button>
+        </div>
+
+        <div class="result-screen" id="resultScreen">
+            <div class="score-circle">
+                <div class="score-number" id="finalScore"></div>
+                <div class="score-label">von 10</div>
+            </div>
+            <div class="result-title" id="resultTitle"></div>
+            <div class="result-msg" id="resultMsg"></div>
+            <button class="restart-btn" onclick="restartQuiz()">Nochmal versuchen</button>
+        </div>
+
+    </div>
+</main>
+
+<footer>
+    Bildungsmaterial zur politischen Aufkl&auml;rung &middot; DeutschU
+</footer>
+
+<script>
+const questions = [
+    {
+        term: "Lügenpresse",
+        question: "Was ist das Ziel des Begriffs „Lügenpresse" in der Sprache der Neuen Rechten?",
+        options: [
+            "Legitime Medienkritik an einzelnen Falschmeldungen",
+            "Pauschale Delegitimierung freier Medien, um Misstrauen zu schüren",
+            "Fachbegriff aus der Medienwissenschaft",
+            "Historische Bezeichnung für staatlich gelenkte Presse"
+        ],
+        correct: 1,
+        explanation: "„Lügenpresse" ist ein Kampfbegriff, der alle unabhängigen Medien als systematisch lügend darstellt. Er dient dazu, kritische Berichterstattung pauschal zu delegitimieren und Menschen von vertrauenswürdigen Informationsquellen zu entfremden. Der Begriff wurde bereits von den Nationalsozialisten verwendet."
+    },
+    {
+        term: "Umvolkung",
+        question: "Was bezeichnet die Neue Rechte mit dem Begriff „Umvolkung"?",
+        options: [
+            "Kulturellen Austausch zwischen Ländern",
+            "Die angebliche gezielte Ersetzung der deutschen Bevölkerung durch Einwanderung",
+            "Einbürgerungsverfahren für Migranten",
+            "Demografischen Wandel durch Geburtenrückgang"
+        ],
+        correct: 1,
+        explanation: "„Umvolkung" ist ein antisemitischer Verschwörungsmythos, der behauptet, die deutsche Bevölkerung werde durch Migration absichtlich ausgetauscht. Der Begriff impliziert eine gesteuerte Aktion und schürt rassistische Feindbilder. Er entstammt der NS-Ideologie und ist heute ein zentraler Begriff der rechtsextremen Szene."
+    },
+    {
+        term: "Ethnopluralismus",
+        question: "Was verbirgt sich hinter dem Konzept des „Ethnopluralismus" der Neuen Rechten?",
+        options: [
+            "Gleichberechtigung aller ethnischen Gruppen weltweit",
+            "Eine Form von Rassismus, die Völker als homogen und trennbar konstruiert",
+            "Das Recht auf kulturelle Selbstbestimmung in multinationalen Staaten",
+            "Wissenschaftlicher Begriff der Ethnologie"
+        ],
+        correct: 1,
+        explanation: "Ethnopluralismus klingt nach Vielfalt, meint aber das Gegenteil: Jede „Ethnie" solle getrennt in ihrer Heimat leben. Das verschleiert Rassismus mit dem Deckmantel des Respekts. In der Praxis dient der Begriff als intellektuell aufgeladene Ablehnung von Migration und gesellschaftlicher Vielfalt."
+    },
+    {
+        term: "Volksverräter",
+        question: "Wozu wird der Begriff „Volksverräter" von der Neuen Rechten eingesetzt?",
+        options: [
+            "Kritik an Politikern wegen konkreter Gesetzesverstöße",
+            "Historische Bezeichnung aus dem Strafrecht",
+            "Einschüchterung und Delegitimierung demokratischer Politiker und Medienvertreter",
+            "Neutral für Personen, die nationale Interessen schädigen"
+        ],
+        correct: 2,
+        explanation: "„Volksverräter" war ein Straftatbestand im NS-Staat und wurde zur Legitimierung von Todesurteilen genutzt. Heute dient er dazu, Demokraten, Journalisten und Wissenschaftler einzuschüchtern und zu bedrohen. Die Verwendung des Begriffs impliziert, dass die Betreffenden keine Strafverfolgung, sondern Bestrafung verdienen."
+    },
+    {
+        term: "Der Große Austausch",
+        question: "Was ist der „Große Austausch" (Grande Remplacement)?",
+        options: [
+            "Ein Historiker-Begriff für den demografischen Wandel in Europa",
+            "Ein antisemitischer Verschwörungsmythos über geplante Einwanderung",
+            "UN-Programm zur Bevölkerungsumverteilung",
+            "Geopolitisches Konzept der Geostrategie"
+        ],
+        correct: 1,
+        explanation: "„Der Große Austausch" ist eine internationale Verschwörungstheorie, die behauptet, eine Elite (oft Juden zugeschrieben) ersetze die weiße Bevölkerung Europas durch nicht-weiße Migranten. Die Theorie hat mehrere rechtsterroristische Anschläge inspiriert, darunter in Christchurch (2019) und El Paso (2019)."
+    },
+    {
+        term: "Remigration",
+        question: "Was meinen Rechtsextreme, wenn sie „Remigration" fordern?",
+        options: [
+            "Freiwillige Rückkehrhilfe für Migranten in ihre Herkunftsländer",
+            "Massenzwangsvertreibung von Menschen mit Migrationshintergrund",
+            "Fachbegriff der Migrationsforschung für Rückkehrmigration",
+            "Programm zur besseren Integration von Rückkehrern"
+        ],
+        correct: 1,
+        explanation: "Wie im Potsdamer Geheimtreffen 2023 enthüllt wurde, meinen Rechtsextreme mit „Remigration" die Zwangsvertreibung von Millionen Menschen – auch solcher mit deutschem Pass. Der Begriff klingt harmlos-bürokratisch, beschreibt aber ethnische Säuberungen. Recherchen des Mediums „Correctiv" lösten 2024 bundesweite Proteste aus."
+    },
+    {
+        term: "Biodeutsch",
+        question: "Was impliziert der Begriff „biodeutsch" in rechtsextremen Kreisen?",
+        options: [
+            "Ökologisch bewusstes Deutschtum",
+            "Eine biologistisch-rassistische Definition von Deutschsein nach Abstammung",
+            "Scherzhafter Umgangssprachbegriff ohne politische Bedeutung",
+            "Bürger mit deutschem Pass ohne Migrationshintergrund"
+        ],
+        correct: 1,
+        explanation: "„Biodeutsch" konstruiert Deutschsein als biologische Eigenschaft statt als staatsbürgerliche Zugehörigkeit. Der Begriff schließt alle mit Migrationsgeschichte aus, egal ob sie in Deutschland geboren wurden oder die Staatsangehörigkeit besitzen. Dies entspricht einer rassistischen Blut-und-Boden-Ideologie."
+    },
+    {
+        term: "Systemmedien / Systemparteien",
+        question: "Welche Funktion haben Begriffe wie „Systemmedien" oder „Systemparteien"?",
+        options: [
+            "Sachliche Kritik an mächtigen Institutionen",
+            "Pauschalabwertung demokratischer Institutionen als korrupt und unecht",
+            "Wissenschaftliche Kategorisierung politischer Systeme",
+            "Neutrale Beschreibung etablierter Parteien"
+        ],
+        correct: 1,
+        explanation: "Das Präfix „System-" signalisiert, dass Medien und Parteien nicht das Volk, sondern ein feindliches System repräsentieren. Es unterhöhlt Vertrauen in demokratische Institutionen und impliziert, dass nur die Rechtsextremen die „wahre" Stimme des Volkes seien. Diese Rhetorik ist ein klassisches Merkmal antidemokratischer Bewegungen."
+    },
+    {
+        term: "Volkstod",
+        question: "Wofür wird die Rede vom drohenden „Volkstod" in rechtsextremer Propaganda genutzt?",
+        options: [
+            "Demographische Debatte über Geburtenrückgang",
+            "Apokalyptische Dramatisierung zur Angstertzeugung und Mobilisierung",
+            "Historischer Begriff aus dem Völkerrecht",
+            "Aufruf zu familienpolitischen Maßnahmen"
+        ],
+        correct: 1,
+        explanation: "„Volkstod" dramatisiert normalen demografischen Wandel zu einer existenziellen Bedrohung. Die apokalyptische Sprache soll Angst erzeugen, Handlungsdruck aufbauen und radikale Maßnahmen als notwendig erscheinen lassen. Solche Notstandsrhetorik ist ein klassisches Instrument zur Enthemmung von Gewalt."
+    },
+    {
+        term: "Identität (Identitäre Bewegung)",
+        question: "Wie wird der Begriff „Identität" von der Identitären Bewegung ideologisch umgedeutet?",
+        options: [
+            "Individuelle Persönlichkeitsentwicklung jedes Menschen",
+            "Kollektive, unveränderliche ethnische Zugehörigkeit als höchster Wert",
+            "Kulturelles Erbe, das für alle Bürger eines Landes gilt",
+            "Psychologischer Begriff für Selbstwahrnehmung"
+        ],
+        correct: 1,
+        explanation: "Die Identitäre Bewegung definiert Identität als ethnisch-kollektiv und unveränderlich. Jeder Mensch gehöre einer bestimmten Ethnie an und müsse in deren „Heimat" bleiben. Diese Umdeutung ersetzt individuelle Freiheit durch kollektive Abstammungszugehörigkeit – und legitimiert so Ausgrenzung und Vertreibung."
+    }
+];
+
+let currentQuestion = 0;
+let score = 0;
+let answered = false;
+
+function startQuiz() {
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('quizScreen').style.display = 'block';
+    showQuestion();
+}
+
+function showQuestion() {
+    const q = questions[currentQuestion];
+    answered = false;
+
+    document.getElementById('progressFill').style.width = `${(currentQuestion / questions.length) * 100}%`;
+    document.getElementById('questionCount').textContent = `Frage ${currentQuestion + 1} von ${questions.length}`;
+    document.getElementById('scoreDisplay').textContent = `Punkte: ${score}`;
+    document.getElementById('termBadge').textContent = q.term;
+    document.getElementById('questionText').textContent = q.question;
+
+    const container = document.getElementById('optionsContainer');
+    container.innerHTML = '';
+    q.options.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = opt;
+        btn.onclick = () => selectAnswer(i);
+        container.appendChild(btn);
+    });
+
+    document.getElementById('explanation').classList.remove('visible');
+    document.getElementById('nextBtn').classList.remove('visible');
+}
+
+function selectAnswer(index) {
+    if (answered) return;
+    answered = true;
+
+    const q = questions[currentQuestion];
+    const buttons = document.querySelectorAll('.option-btn');
+
+    buttons.forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === q.correct) btn.classList.add('correct');
+        else if (i === index && i !== q.correct) btn.classList.add('wrong');
+    });
+
+    if (index === q.correct) score++;
+
+    document.getElementById('explanation').textContent = q.explanation;
+    document.getElementById('explanation').classList.add('visible');
+    document.getElementById('nextBtn').classList.add('visible');
+    document.getElementById('nextBtn').textContent =
+        currentQuestion + 1 < questions.length ? 'Weiter →' : 'Ergebnis anzeigen';
+}
+
+function nextQuestion() {
+    currentQuestion++;
+    if (currentQuestion < questions.length) {
+        showQuestion();
+    } else {
+        showResult();
+    }
+}
+
+function showResult() {
+    document.getElementById('quizScreen').style.display = 'none';
+    document.getElementById('resultScreen').classList.add('visible');
+    document.getElementById('finalScore').textContent = score;
+
+    let title, msg;
+    if (score >= 9) {
+        title = 'Hervorragend!';
+        msg = 'Du erkennst rechtsextreme Sprache sehr sicher. Dieses Wissen ist wichtig – teile es mit anderen!';
+    } else if (score >= 7) {
+        title = 'Gut gemacht!';
+        msg = 'Du kennst viele Begriffe der Neuen Rechten. Ein zweiter Durchgang festigt dein Wissen.';
+    } else if (score >= 5) {
+        title = 'Solide Basis!';
+        msg = 'Du erkennst manche Muster, aber rechtsextreme Sprache ist raffiniert. Lohnt sich, nochmal dranzubleiben.';
+    } else {
+        title = 'Weiter lernen!';
+        msg = 'Rechtsextreme Sprache ist bewusst verschleiernd. Mit diesem Quiz kannst du dein Erkennen trainieren.';
+    }
+
+    document.getElementById('resultTitle').textContent = title;
+    document.getElementById('resultMsg').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0;
+    score = 0;
+    document.getElementById('resultScreen').classList.remove('visible');
+    document.getElementById('quizScreen').style.display = 'block';
+    showQuestion();
+}
+</script>
+
+</body>
+</html>
