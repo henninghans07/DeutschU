@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Erkenne die Strategie</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e0e0e0;font-family:system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:12px}
+.card{background:#13131e;border-radius:16px;padding:20px;max-width:500px;width:100%;border:1px solid #1e1e2e}
+h1{color:#00d4ff;font-size:1.3rem;text-align:center;margin-bottom:4px}
+.sub{text-align:center;font-size:.8rem;color:#888;margin-bottom:16px}
+.progress{background:#1e1e2e;border-radius:8px;height:6px;margin-bottom:16px}
+.bar{background:#00d4ff;height:6px;border-radius:8px;transition:width .4s}
+.qnum{color:#00d4ff;font-size:.75rem;margin-bottom:6px}
+.zitat{background:#0a0a0f;border-left:3px solid #00d4ff;padding:10px 12px;border-radius:6px;font-style:italic;font-size:.9rem;margin-bottom:6px}
+.quelle{font-size:.7rem;color:#555;margin-bottom:14px}
+.opts button{width:100%;background:#0a0a0f;border:1px solid #1e1e2e;color:#e0e0e0;padding:10px 12px;border-radius:8px;margin-bottom:8px;cursor:pointer;text-align:left;font-size:.85rem;transition:all .2s;line-height:1.4}
+.opts button:hover{border-color:#00d4ff;color:#00d4ff}
+.opts button.correct{background:#0d2e1a;border-color:#00ff88;color:#00ff88}
+.opts button.wrong{background:#2e0d0d;border-color:#ff4444;color:#ff4444}
+.erkl{background:#0a0a0f;border:1px solid #1e1e2e;border-radius:8px;padding:12px;font-size:.82rem;margin-top:10px;display:none;line-height:1.6}
+.erkl .label{color:#00d4ff;font-weight:bold;font-size:.85rem;display:block;margin-bottom:6px}
+.erkl .definition{color:#aaa;font-size:.75rem;margin-bottom:6px;font-style:italic;border-bottom:1px solid #1e1e2e;padding-bottom:6px}
+.next{background:#00d4ff;color:#0a0a0f;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-weight:bold;margin-top:12px;width:100%;font-size:.9rem;display:none}
+.score{text-align:center;display:none}
+.score h2{color:#00d4ff;font-size:2rem;margin:12px 0}
+.score p{color:#888;font-size:.9rem;margin-bottom:16px}
+.restart{background:#00d4ff;color:#0a0a0f;border:none;padding:12px 28px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:1rem}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🎯 Erkenne die Strategie</h1>
+  <div class="sub">Sprache der Neuen Rechten erkennen und einordnen</div>
+  <div class="progress"><div class="bar" id="bar"></div></div>
+  <div id="quiz">
+    <div class="qnum" id="qnum"></div>
+    <div class="zitat" id="zitat"></div>
+    <div class="quelle" id="quelle"></div>
+    <div class="opts" id="opts"></div>
+    <div class="erkl" id="erkl"></div>
+    <button class="next" id="next" onclick="nextQ()">Weiter →</button>
+  </div>
+  <div class="score" id="score">
+    <div style="font-size:2.5rem">🏆</div>
+    <h2 id="pts"></h2>
+    <p id="msg"></p>
+    <button class="restart" onclick="restart()">Nochmal spielen</button>
+  </div>
+</div>
+<script>
+const q=[
+  {
+    z:'"Ein groß angelegtes Remigrationsprojekt wird notwendig sein."',
+    src:'Björn Höcke (AfD Thüringen)',
+    correct:0,
+    opts:[
+      'Euphemismus – ein harter Begriff wird durch ein harmloses Fremdwort ersetzt',
+      'Whataboutism – vom eigentlichen Thema abgelenkt',
+      'Dog Whistle – eine versteckte Botschaft nur für Eingeweihte'
+    ],
+    label:'Euphemismus',
+    def:'Euphemismus = beschönigende Ersatzbezeichnung für etwas Unangenehmes oder Extremes.',
+    erkl:'„Remigration" klingt technisch-neutral, meint aber Massenabschiebungen – auch von Menschen mit deutschem Pass. Das Fremdwort soll die eigentliche Forderung salonfähig machen.'
+  },
+  {
+    z:'"Die politische Korrektheit gehört auf den Müllhaufen der Geschichte."',
+    src:'Alice Weidel (AfD), Bundestagsrede',
+    correct:2,
+    opts:[
+      'Euphemismus – ein unangenehmer Begriff wird verschleiert',
+      'Othering – eine Gruppe wird als fremd dargestellt',
+      'Framing – ein Begriff wird negativ umgedeutet, um Stimmung zu machen'
+    ],
+    label:'Framing',
+    def:'Framing = einen Begriff so einrahmen, dass er eine bestimmte (positive oder negative) Wirkung erzeugt.',
+    erkl:'„Politische Korrektheit" wird hier so geframt, als wäre gegenseitiger Respekt eine Form von Unterdrückung. Das Ziel: Wer für Respekt eintritt, soll als Feind der Redefreiheit wirken.'
+  },
+  {
+    z:'"Wir werden sie jagen!" – nach der Bundestagswahl 2017.',
+    src:'Alexander Gauland (AfD), Berlin – AfD-Wahlparty 2017',
+    correct:1,
+    opts:[
+      'Euphemismus – die Aussage wird abgeschwächt',
+      'Drohsprache – politische Gegner werden gezielt eingeschüchtert',
+      'Whataboutism – ein Gegenbeispiel wird vorgeschoben'
+    ],
+    label:'Drohsprache',
+    def:'Drohsprache = sprachliche Einschüchterung, oft bewusst mehrdeutig, um rechtliche Konsequenzen zu umgehen.',
+    erkl:'Der Satz ist absichtlich offen formuliert: „jagen" kann buchstäblich oder politisch gemeint sein. Diese Doppeldeutigkeit ist Methode – sie erzeugt Angst, bleibt aber strafrechtlich schwer greifbar.'
+  },
+  {
+    z:'"Aber was ist mit den Deutschen, die täglich Opfer von Ausländerkriminalität werden?"',
+    src:'Typisches AfD-Debattenmuster, Bundestag',
+    correct:0,
+    opts:[
+      'Whataboutism – durch ein Gegenbeispiel wird vom Thema abgelenkt',
+      'Moral Panic – eine übertriebene Bedrohung wird konstruiert',
+      'Framing – ein Begriff wird negativ besetzt'
+    ],
+    label:'Whataboutism',
+    def:'Whataboutism = auf eine Kritik nicht eingehen, sondern mit einem anderen Vorwurf kontern.',
+    erkl:'Statt die eigentliche Frage zu beantworten, wird ein emotionales Gegenbeispiel gebracht. Die Technik verhindert sachliche Diskussion und lenkt die Aufmerksamkeit auf ein anderes Thema.'
+  },
+  {
+    z:'"Die Gender-Ideologie zerstört unsere Kinder."',
+    src:'AfD-Wahlkampfmaterial 2021/2025',
+    correct:2,
+    opts:[
+      'Euphemismus – ein harter Begriff wird abgemildert',
+      'Whataboutism – vom Thema wird abgelenkt',
+      'Moral Panic – eine übertriebene Bedrohung wird erzeugt, um Angst zu schüren'
+    ],
+    label:'Moral Panic',
+    def:'Moral Panic = eine gesellschaftliche Gruppe oder Idee wird als extreme Bedrohung dargestellt, die sofortiges Handeln erfordert.',
+    erkl:'„Zerstört unsere Kinder" ist eine extreme Formulierung für Debatten über Gleichstellung. Der Verweis auf Kinder macht das Thema besonders emotional – rationale Gegenargumente werden so schwerer.'
+  },
+  {
+    z:'"Die Altparteien haben Deutschland verraten."',
+    src:'AfD-Wahlkampfsprache, vielfach belegt',
+    correct:1,
+    opts:[
+      'Dog Whistle – eine verschlüsselte Botschaft für die eigene Basis',
+      'Populismus – „das Volk" wird gegen eine korrupte Elite ausgespielt',
+      'Othering – eine Gruppe wird als fremd dargestellt'
+    ],
+    label:'Populismus',
+    def:'Populismus = die Behauptung, als einzige Kraft das wahre Volk zu vertreten – gegen eine böse, abgehobene Elite.',
+    erkl:'„Altparteien" impliziert: alle anderen sind verstaubt und volksfremd. „Verraten" suggeriert absichtliches Handeln gegen die Bevölkerung. Zusammen entsteht ein Feindbild ohne konkrete Belege.'
+  },
+  {
+    z:'"Lügenpresse!" – als Reaktion auf kritische Berichterstattung.',
+    src:'AfD & PEGIDA, ab 2014 systematisch genutzt',
+    correct:2,
+    opts:[
+      'Framing – Journalismus wird negativ gerahmt',
+      'Moral Panic – übertriebene Angst wird erzeugt',
+      'Delegitimierung – die Glaubwürdigkeit von Institutionen wird pauschal zerstört'
+    ],
+    label:'Delegitimierung',
+    def:'Delegitimierung = eine Institution (Medien, Justiz, Politik) wird als grundsätzlich unglaubwürdig dargestellt.',
+    erkl:'Mit einem einzigen Schlagwort werden alle Medien pauschal abgestempelt. Wer Medien nicht mehr traut, sucht nach Alternativen – und ist empfänglicher für unkontrollierte Quellen.'
+  },
+  {
+    z:'"Wir sind das Volk!" – auf Demo gegen Migrationspolitik.',
+    src:'Rechte Demos, ab 1989 zweckentfremdet',
+    correct:0,
+    opts:[
+      'Symbolaneignung – ein historischer Slogan wird umgedeutet',
+      'Populismus – das Volk wird gegen die Elite gestellt',
+      'Framing – ein Begriff wird negativ besetzt'
+    ],
+    label:'Symbolaneignung',
+    def:'Symbolaneignung = ein positiv besetztes Symbol oder ein historischer Begriff wird für andere Zwecke übernommen.',
+    erkl:'„Wir sind das Volk" war der Ruf der friedlichen Revolution gegen die DDR-Diktatur. Rechte Gruppen verwenden ihn, um nationalist­ische Ziele mit dem Nimbus von Widerstand und Freiheit aufzuladen.'
+  },
+  {
+    z:'"Der Islam gehört nicht zu Deutschland."',
+    src:'Thilo Sarrazin / AfD-Programm (mehrfach)',
+    correct:1,
+    opts:[
+      'Euphemismus – eine harte Aussage wird abgemildert',
+      'Othering – eine Bevölkerungsgruppe wird als grundsätzlich fremd definiert',
+      'Dog Whistle – eine Botschaft nur für Eingeweihte'
+    ],
+    label:'Othering',
+    def:'Othering = eine Gruppe wird als das „Andere", Fremde oder Bedrohliche konstruiert – obwohl sie Teil der Gesellschaft ist.',
+    erkl:'Millionen Muslime leben als deutsche Staatsbürger hier. Mit dem Satz werden sie trotzdem als nicht zugehörig erklärt. Das schafft ein „Wir" und ein „Die" – und macht Diskriminierung anschlussfähiger.'
+  },
+  {
+    z:'"Deutschland wird für die Deutschen – oder es wird nicht sein."',
+    src:'Höcke-Umfeld, rechtsextreme Rhetorik (Verfassungsschutz)',
+    correct:2,
+    opts:[
+      'Framing – ein Begriff wird umgedeutet',
+      'Populismus – das Volk gegen die Elite',
+      'Ethnopluralismus – ein ethnisch definiertes Nationalbild wird als normal dargestellt'
+    ],
+    label:'Ethnopluralismus',
+    def:'Ethnopluralismus = die Idee, dass jede „Volksgruppe" ihr eigenes, ethnisch reines Territorium haben solle – klingt neutral, ist aber rassistisch.',
+    erkl:'Der Satz stellt eine ethnisch homogene Nation als Selbstverständlichkeit dar. Das Wort „Deutschen" meint hier keine Staatsbürger, sondern eine biologische Abstammungsgruppe – ein Kernelement rechtsextremer Ideologie.'
+  }
+];
+
+let cur=0,score=0,answered=false;
+
+function load(){
+  const d=q[cur];
+  document.getElementById('qnum').textContent=`Frage ${cur+1} von ${q.length}`;
+  document.getElementById('zitat').textContent=`„${d.z}"`;
+  document.getElementById('quelle').textContent=`📎 ${d.src}`;
+  document.getElementById('bar').style.width=((cur/q.length)*100)+'%';
+  const o=document.getElementById('opts');
+  o.innerHTML='';
+  d.opts.forEach((t,i)=>{
+    const b=document.createElement('button');
+    b.textContent=t;
+    b.onclick=()=>answer(i,b);
+    o.appendChild(b);
+  });
+  document.getElementById('erkl').style.display='none';
+  document.getElementById('next').style.display='none';
+  answered=false;
+}
+
+function answer(i,btn){
+  if(answered)return;
+  answered=true;
+  const d=q[cur];
+  const btns=document.querySelectorAll('.opts button');
+  btns[d.correct].classList.add('correct');
+  if(i===d.correct){score++;}else{btn.classList.add('wrong');}
+  const e=document.getElementById('erkl');
+  e.innerHTML=`<span class="label">✅ ${d.label}</span><div class="definition">📖 ${d.def}</div>${d.erkl}`;
+  e.style.display='block';
+  document.getElementById('next').style.display='block';
+}
+
+function nextQ(){
+  cur++;
+  if(cur>=q.length){showScore();}else{load();}
+}
+
+function showScore(){
+  document.getElementById('bar').style.width='100%';
+  document.getElementById('quiz').style.display='none';
+  const s=document.getElementById('score');
+  s.style.display='block';
+  document.getElementById('pts').textContent=`${score} / ${q.length}`;
+  const msgs=[
+    'Schau dir die Erklärungen nochmal an – die Strategien sind trickreich!',
+    'Guter Anfang! Mit etwas Übung erkennst du die Muster sicher.',
+    'Solide! Du hast die wichtigsten Techniken verstanden.',
+    'Sehr gut! Du durchschaust die meisten rhetorischen Tricks.',
+    'Ausgezeichnet! Du erkennst alle Strategien sicher. 🎓'
+  ];
+  document.getElementById('msg').textContent=msgs[Math.min(Math.floor(score/2),4)];
+}
+
+function restart(){
+  cur=0;score=0;
+  document.getElementById('score').style.display='none';
+  document.getElementById('quiz').style.display='block';
+  load();
+}
+
+load();
+</script>
+</div>
+</body>
+</html>
